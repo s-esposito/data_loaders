@@ -231,12 +231,14 @@ void DataLoaderDTU::read_scene(const std::string scene_path){
         paths.push_back(img_path);
     }
 
+    std::sort(paths.begin(), paths.end());
+
     //shuffle the images from this scene
-    unsigned seed1 = m_nr_scenes_read_so_far;
-    auto rng_1 = std::default_random_engine(seed1);
-    if(m_mode=="train" || m_mode=="all"){
-        std::shuffle(std::begin(paths), std::end(paths), rng_1);
-    }
+    // unsigned seed1 = m_nr_scenes_read_so_far;
+    // auto rng_1 = std::default_random_engine(seed1);
+    // if(m_mode=="train" || m_mode=="all"){
+    //     std::shuffle(std::begin(paths), std::end(paths), rng_1);
+    // }
 
     //skip the ones we use for testing
     //https://github.com/Totoro97/NeuS/issues/34
@@ -246,6 +248,7 @@ void DataLoaderDTU::read_scene(const std::string scene_path){
     for (size_t i=0; i<paths.size(); i++){
         // fs::path img_path= itr->path();
         fs::path img_path= paths[i];
+        // std::cout << "img_path" <<img_path << std::endl;
         //get only files that end in png
         // VLOG(1) << "img_path" <<img_path;
         if(img_path.filename().string().find("png")!= std::string::npos){
@@ -349,9 +352,9 @@ void DataLoaderDTU::read_scene(const std::string scene_path){
     m_nr_scenes_read_so_far++;
 
     //shuffle the images from this scene
-    unsigned seed = m_nr_scenes_read_so_far;
-    auto rng_0 = std::default_random_engine(seed);
-    std::shuffle(std::begin(m_frames_for_scene), std::end(m_frames_for_scene), rng_0);
+    //unsigned seed = m_nr_scenes_read_so_far;
+    //auto rng_0 = std::default_random_engine(seed);
+    //std::shuffle(std::begin(m_frames_for_scene), std::end(m_frames_for_scene), rng_0);
 
     m_is_running=false;
 }
@@ -774,4 +777,6 @@ std::unordered_map<std::string, std::string> DataLoaderDTU::create_mapping_class
 
     return classnr2classname;
 }
+
+
 
