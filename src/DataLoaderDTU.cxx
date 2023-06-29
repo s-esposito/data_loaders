@@ -113,10 +113,8 @@ void DataLoaderDTU::init_data_reading(){
         LOG(FATAL) << "No directory " << m_dataset_path;
     }
 
-
     //load the corresponding file and get from there the scene that we need to read
     fs::path scene_file_path= m_dataset_path/("new_"+m_mode+".lst");
-
 
     //we find this the new_train.lst file only in the pixelnerf DTU version but not in the neus one
     bool found_scene_file=boost::filesystem::exists(scene_file_path);
@@ -169,7 +167,6 @@ void DataLoaderDTU::init_data_reading(){
 
     }
 
-
     VLOG(1) << "loaded nr of scenes " << m_scene_folders.size() << " for mode " << m_mode;
 
     // shuffle the data if neccsary
@@ -180,8 +177,6 @@ void DataLoaderDTU::init_data_reading(){
     }
 
     CHECK(m_scene_folders.size()!=0 ) << "We have read zero scene folders";
-
-
 }
 
 void DataLoaderDTU::start_reading_next_scene(){
@@ -233,12 +228,12 @@ void DataLoaderDTU::read_scene(const std::string scene_path){
 
     std::sort(paths.begin(), paths.end());
 
-    //shuffle the images from this scene
-    // unsigned seed1 = m_nr_scenes_read_so_far;
-    // auto rng_1 = std::default_random_engine(seed1);
-    // if(m_mode=="train" || m_mode=="all"){
-    //     std::shuffle(std::begin(paths), std::end(paths), rng_1);
-    // }
+    // shuffle the data for this scene if neccsary
+    if(m_shuffle && m_mode=="train"){
+        unsigned seed1 = m_nr_scenes_read_so_far;
+        auto rng_1 = std::default_random_engine(seed1);
+        std::shuffle(std::begin(paths), std::end(paths), rng_1);
+    }
 
     //skip the ones we use for testing
     //https://github.com/Totoro97/NeuS/issues/34
@@ -777,6 +772,8 @@ std::unordered_map<std::string, std::string> DataLoaderDTU::create_mapping_class
 
     return classnr2classname;
 }
+
+
 
 
 

@@ -141,7 +141,7 @@ void DataLoaderNerf::init_data_reading(){
     std::sort(m_imgs_paths.begin(), m_imgs_paths.end(), FileComparatorFunc);
 
 
-    // shuffle the data if neccsary
+    // shuffle the data if neccesary
     if(m_shuffle && m_mode=="train"){
         unsigned seed = m_nr_resets;
         auto rng_0 = std::default_random_engine(seed);
@@ -580,3 +580,4 @@ void DataLoaderNerf::set_mode_test(){
 void DataLoaderNerf::set_mode_validation(){
     m_mode="val";
 }
+
