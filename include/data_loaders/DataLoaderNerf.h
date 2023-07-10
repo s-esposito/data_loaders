@@ -6,8 +6,6 @@
 #include <vector>
 #include <atomic>
 
-
-
 //eigen
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -21,8 +19,6 @@
 #include <boost/filesystem.hpp>
 
 #include "easy_pbr/Frame.h"
-
-
 
 namespace radu { namespace utils{
     class RandGenerator;
@@ -57,12 +53,10 @@ public:
     int subsample_factor();
     bool is_finished(); //check if we finished reading all the images from the scene
     void set_load_mask(bool load_mask);
+    void set_bg_color(const float r, const float g, const float b);
     void set_mode_train(); //set the loader so that it starts reading form the training set
     void set_mode_test();
     void set_mode_validation();
-
-
-
 
 private:
 
@@ -70,7 +64,6 @@ private:
     void init_data_reading(); //after the parameters this uses the params to initiate all the structures needed for the susequent read_data
     void init_poses(); //rad the pose json file and fills m_filename2pose
     void read_data(); //a scene (depending on the mode) and all the images contaned in it together with the poses and so on
-
 
     //objects
     std::shared_ptr<radu::utils::RandGenerator> m_rand_gen;
@@ -91,7 +84,7 @@ private:
     int m_idx_img_to_read; //corresponds to the idx of the frame we will return since we have them all in memory
     std::string m_restrict_to_scene_name;
     bool m_load_mask;
-
+    float m_r, m_g, m_b; //the color of the background
 
     //internal
     std::unordered_map<std::string, Eigen::Affine3d> m_filename2pose; //maps from the filename of the image to the corresponding pose

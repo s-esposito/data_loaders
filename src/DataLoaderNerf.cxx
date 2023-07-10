@@ -105,6 +105,9 @@ void DataLoaderNerf::init_params(const std::string config_file){
     m_dataset_path = (std::string)loader_config["dataset_path"];    //get the path where all the off files are
     m_restrict_to_scene_name= (std::string)loader_config["restrict_to_scene_name"];
 
+    m_r = 0.0;
+    m_g = 0.0;
+    m_b = 0.0;
 
     //data transformer
     // Config transformer_config=loader_config["transformer"];
@@ -225,13 +228,13 @@ void DataLoaderNerf::read_data(){
 
         Frame frame;
 
-        fs::path img_path=m_imgs_paths[i];
+        fs::path img_path = m_imgs_paths[i];
         // VLOG(1) << "reading " << img_path;
-        frame.rgb_path=img_path.string();
+        frame.rgb_path = img_path.string();
 
         //get the idx
-        std::string filename=img_path.stem().string();
-        std::vector<std::string> tokens=radu::utils::split(filename,"_");
+        std::string filename = img_path.stem().string();
+        std::vector<std::string> tokens = radu::utils::split(filename,"_");
         if (tokens.size()==1){ //if there is only one token we are loading the instant_ngp data which has images as NR.jpg
             frame.frame_idx=std::stoi(tokens[0]);
         }else{
@@ -240,29 +243,42 @@ void DataLoaderNerf::read_data(){
 
         //read rgba and split into rgb and alpha mask
         cv::Mat rgba_8u = cv::imread(img_path.string(), cv::IMREAD_UNCHANGED);
+        // convert to uint8
+        // rgba_8u.convertTo(rgba_8u, CV_8UC4); 
         // VLOG(1) << "typestring is " << radu::utils::type2string(rgba_8u.type());
-        int nr_channels=rgba_8u.channels();
-        cv::Mat rgb_8u;
-        if (nr_channels==4){
-            if(m_subsample_factor>1){
-                cv::Mat resized;
-                cv::resize(rgba_8u, resized, cv::Size(), 1.0/m_subsample_factor, 1.0/m_subsample_factor, cv::INTER_AREA);
-                rgba_8u=resized;
-            }
-            std::vector<cv::Mat> channels(4);
-            cv::split(rgba_8u, channels);
-            if (m_load_mask){
-                cv::threshold( channels[3], frame.mask, 0.0, 1.0, cv::THRESH_BINARY);
-            }
-            channels.pop_back();
-            cv::merge(channels, rgb_8u);
-        }else{
-            rgb_8u=rgba_8u;
-        }
 
-        // cv::cvtColor(frame.rgb_8u, frame.gray_8u, cv::COLOR_BGR2GRAY);
-        rgb_8u.convertTo(frame.rgb_32f, CV_32FC3, 1.0/255.0);
-        // cv::cvtColor(frame.rgb_32f, frame.gray_32f, cv::COLOR_BGR2GRAY);
+        if(m_subsample_factor>1){
+            cv::Mat resized;
+            cv::resize(rgba_8u, resized, cv::Size(), 1.0/m_subsample_factor, 1.0/m_subsample_factor, cv::INTER_AREA);
+            rgba_8u = resized;
+        }
+        
+        // split channels
+        std::vector<cv::Mat> channels(4);
+        cv::split(rgba_8u, channels);
+
+        // composite rgb on top of bg given alpha
+        channels[0] = channels[0].mul(channels[3]/255.0) + m_r * (1.0 - channels[3]/255.0);
+        channels[1] = channels[1].mul(channels[3]/255.0) + m_g * (1.0 - channels[3]/255.0);
+        channels[2] = channels[2].mul(channels[3]/255.0) + m_b * (1.0 - channels[3]/255.0);
+
+        // get alpha channel, binary threshold to use as mask
+        if (m_load_mask){
+            frame.mask_path = img_path.string();
+            cv::Mat mask;
+            cv::threshold(channels[3], mask, 0.0, 1.0, cv::THRESH_BINARY);
+            mask.convertTo(frame.mask, CV_8UC3, 1.0); // CV_32FC3
+        }
+        channels.pop_back();
+
+        cv::merge(channels, frame.rgb_8u);
+
+        // frame.rgb_8u = frame.rgb_8u/255.0;
+        frame.rgb_8u.convertTo(frame.rgb_32f, CV_32FC3, 1.0/255.0);
+        // frame.width=frame.rgb_8u.cols;
+        // frame.height=frame.rgb_8u.rows;
+
+        // frame.rgb_8u.convertTo(frame.rgb_32f, CV_32FC3, 1.0);
         frame.width=frame.rgb_32f.cols;
         frame.height=frame.rgb_32f.rows;
 
@@ -361,12 +377,10 @@ void DataLoaderNerf::read_data(){
         }
 
         m_frames.push_back(frame);
+
+        std::cout << "loaded frame " << frame.frame_idx << std::endl;
         // VLOG(1) << "pushback and frames is " << m_frames.size();
-
-
     }
-
-
 }
 
 
@@ -475,6 +489,12 @@ void DataLoaderNerf::set_load_mask(bool load_mask){
     m_load_mask=load_mask;
 }
 
+void DataLoaderNerf::set_bg_color(const float r, const float g, const float b){
+    m_r = r;
+    m_g = g;
+    m_b = b;
+}
+
 void DataLoaderNerf::set_restrict_to_scene_name(const std::string scene_name){
     m_restrict_to_scene_name=scene_name;
 }
@@ -529,10 +549,6 @@ void DataLoaderNerf::set_dataset_path(const std::string dataset_path){
 
 // }
 
-
-
-
-
 bool DataLoaderNerf::is_finished(){
     //check if this loader has returned all the images it has
     if(m_idx_img_to_read<(int)m_frames.size()){
@@ -543,7 +559,6 @@ bool DataLoaderNerf::is_finished(){
     return true; //there is nothing more to read and nothing more in the buffer so we are finished
 
 }
-
 
 void DataLoaderNerf::reset(){
 
@@ -580,4 +595,3 @@ void DataLoaderNerf::set_mode_test(){
 void DataLoaderNerf::set_mode_validation(){
     m_mode="val";
 }
-

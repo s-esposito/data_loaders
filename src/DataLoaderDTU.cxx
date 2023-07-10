@@ -360,7 +360,7 @@ void DataLoaderDTU::load_images_in_frame(easy_pbr::Frame& frame){
 
 
     // VLOG(1) << "load image from" << frame.rgb_path ;
-    cv::Mat rgb_8u=cv::imread(frame.rgb_path );
+    cv::Mat rgb_8u=cv::imread(frame.rgb_path);
     if(frame.subsample_factor>1){
         cv::Mat resized;
         cv::resize(rgb_8u, resized, cv::Size(), 1.0/frame.subsample_factor, 1.0/frame.subsample_factor, cv::INTER_AREA);
@@ -397,6 +397,9 @@ void DataLoaderDTU::load_images_in_frame(easy_pbr::Frame& frame){
 
     //if we also load into gpu, we do it here
     if(m_preload_to_gpu_tensors){
+
+        std::cout << "preloading image to gpu tensors" << std::endl;
+
         #ifdef WITH_TORCH
             torch::Tensor rgb_32f_tensor=mat2tensor(frame.rgb_32f, true).to("cuda");
             if (!frame.mask_path.empty()){ //load mask if there is any
@@ -414,13 +417,9 @@ void DataLoaderDTU::load_images_in_frame(easy_pbr::Frame& frame){
         #endif
         
     }
-
-
 }
 
 void DataLoaderDTU::read_poses_and_intrinsics(){
-
-
 
     for(size_t scene_idx=0; scene_idx<m_scene_folders.size(); scene_idx++){
 
@@ -436,8 +435,6 @@ void DataLoaderDTU::read_poses_and_intrinsics(){
             paths.push_back(img_path);
         }
 
-
-
         //read pose and camera params needs to be read from the camera.npz
         std::string pose_and_intrinsics_path=(fs::path(scene_path)/"cameras.npz").string();
         //if it doesn't exists it means we might be using the neus dataset which means we have to load camera_sphere.npz
@@ -452,8 +449,6 @@ void DataLoaderDTU::read_poses_and_intrinsics(){
             using_pixelnerf_format=false;
         }
 
-
-
         //load all the scene for the chosen object
         // for (fs::directory_iterator itr(scene_path); itr!=fs::directory_iterator(); ++itr){
         for (size_t i=0; i<paths.size(); i++){
@@ -464,9 +459,7 @@ void DataLoaderDTU::read_poses_and_intrinsics(){
 
                 int img_idx=std::stoi( img_path.stem().string() );
                 // VLOG(1) << "img idx is " << img_idx;
-
-
-
+                
                 //read npz
                 cnpy::NpyArray projection_mat_array = npz_file["world_mat_"+std::to_string(img_idx) ]; //one can obtain the keys with https://stackoverflow.com/a/53901903
                 cnpy::NpyArray scale_array = npz_file["scale_mat_"+std::to_string(img_idx) ]; //one can obtain the keys with https://stackoverflow.com/a/53901903
@@ -772,8 +765,3 @@ std::unordered_map<std::string, std::string> DataLoaderDTU::create_mapping_class
 
     return classnr2classname;
 }
-
-
-
-
-

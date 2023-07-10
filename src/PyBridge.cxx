@@ -214,6 +214,7 @@ PYBIND11_MODULE(dataloaders, m) {
     .def("set_mode_train", &DataLoaderNerf::set_mode_train )
     .def("set_mode_test", &DataLoaderNerf::set_mode_test )
     .def("set_mode_validation", &DataLoaderNerf::set_mode_validation )
+    .def("set_bg_color", &DataLoaderNerf::set_bg_color )
     ;
 
     //DataLoaderEasyPBR
