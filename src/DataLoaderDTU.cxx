@@ -239,6 +239,9 @@ void DataLoaderDTU::read_scene(const std::string scene_path){
     //https://github.com/Totoro97/NeuS/issues/34
     std::vector<int> indexes_for_testing={8, 13, 16, 21, 26, 31, 34, 56};
 
+    // TODO Stefano: read from config file
+    bool train_on_test=true;
+
     //load all the scene for the chosen object
     for (size_t i=0; i<paths.size(); i++){
         // fs::path img_path= itr->path();
@@ -256,7 +259,10 @@ void DataLoaderDTU::read_scene(const std::string scene_path){
             if(std::find(indexes_for_testing.begin(), indexes_for_testing.end(), img_idx) != indexes_for_testing.end()) {
                 /* v contains x */
                 if(m_mode=="train"){ //we are in train mode and we found an image we should use for testing so we skip it
-                    continue;
+                    if (!train_on_test){
+                        continue;
+                    }
+                    // else nothing happens because we are in train mode and we are also training on test images
                 }else if (m_mode=="test" || m_mode=="val"){
                     //nothing happens because we are in test mode and the image is for testing
                 }
@@ -765,3 +771,4 @@ std::unordered_map<std::string, std::string> DataLoaderDTU::create_mapping_class
 
     return classnr2classname;
 }
+
